@@ -23,9 +23,10 @@ def index() -> rx.Component:
                 size="5",
             ),
             rx.link(
-                rx.button("Check out our docs!"),
-                href="https://reflex.dev/docs/getting-started/introduction/",
-                is_external=True,
+                rx.button("Try it out!"),
+                #href="Matrix.py",
+                is_external=False,
+                on_click=rx.redirect("/other")
             ),
             spacing="5",
             justify="center",
