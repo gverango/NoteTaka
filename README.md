@@ -1,2 +1,2 @@
-# NoteTaka
-A web app that is a superpower notetaker. Inspired by Cornell-style notes, it uses AI to help summarize, generate questions, and transcribe voice recordings.
+# TaskTaka
+Action-Power Matrix powered by Reflex.dev with an AI to help interpret and manage priority and non-priority tasks.
