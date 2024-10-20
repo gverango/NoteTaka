@@ -7,22 +7,58 @@ class State(rx.State):
     """The app state."""
     
     # seeing if input in each grid is possible
-    todos = ["", "", "", ""]
+    todos: list[list[str]] = [[], [], [], []]
     
     # Store the user input from the text box
     user_input: str = ""
     
+    # Store what the AI outputs after processing the user input
+    ai_output: str = ""
+    
     # Function to handle adding the user input to the first empty box
     def add_todo_to_box(self):
         for i in range(4):
-            if not self.todos[i]:  # If the slot is empty
-                self.todos[i] = self.user_input
+            if len(self.todos[i]) == min(len(todo) for todo in self.todos):
+                self.todos[i].append(self.user_input)
                 break
         self.user_input = ""  #clears the input field
 
 
 @rx.page(route="/other")
 def matrixpage() -> rx.Component:
+    # properties of grid cards
+    grid_card_props = {
+        "height": "40vh",
+        "width": "100%",
+        "text_align": "center",
+        "padding": "20px",
+        "overflow_y": "auto"
+    }
+    
+    card_colors = [
+        {"background_color": "#FFC90E", "color": "black"},
+        {"background_color": "#E00A0D", "color": "white"},
+        {"background_color": "#1E90FF", "color": "white"},
+        {"background_color": "#B5E61D", "color": "black"},
+    ]
+    
+    # Create the grid layout for the task matrix
+    grid = rx.grid(
+        *[
+            rx.card(
+                rx.vstack(rx.foreach(State.todos[i], lambda item: rx.text(item))),
+                background_color=card_colors[i]["background_color"],
+                color=card_colors[i]["color"],
+                **grid_card_props  # Apply common card properties
+            )
+            for i in range(4)
+        ],
+        columns="2",   # Keep 2 columns for the grid layout
+        gap="20px",    # Add gap between the cards for breathing room
+        width="800px", # Fixed width for the grid to avoid zoom issues
+        margin="auto", # Center the grid
+    )
+    
     return rx.container(
         rx.vstack(  # Stack heading, grid, and input vertically
             # Heading
@@ -34,17 +70,7 @@ def matrixpage() -> rx.Component:
             ),
             
             # Grid displaying the four boxes
-            rx.grid(
-                # Dynamically populate the grid with the todo items
-                rx.card(State.todos[0], height="40vh", width="100%", background_color="#FFC90E", text_align="center", color="black", padding="20px"),
-                rx.card(State.todos[1], height="40vh", width="100%", background_color="#B5E61D", text_align="center", color="black", padding="20px"),
-                rx.card(State.todos[2], height="40vh", width="100%", background_color="#1E90FF", text_align="center", color="white", padding="20px"),
-                rx.card(State.todos[3], height="40vh", width="100%", background_color="#E00A0D", text_align="center", color="white", padding="20px"),
-                columns="2",  # Keep 2 columns for the grid layout
-                gap="20px",  # Add gap between the cards for breathing room
-                width="800px",  # Fixed width for the grid to avoid zoom issues
-                margin="auto",  # Center the grid
-            ),
+            grid,
             
             # Input area for adding a new to-do
             rx.hstack(
@@ -61,7 +87,8 @@ def matrixpage() -> rx.Component:
                     on_click=State.add_todo_to_box,
                     background_color="#1E90FF",
                     color="white",
-                    padding="10px"
+                    padding="10px",
+                    _hover={"cursor": "pointer"}
                 ),
                 justify_content="center",  # Center the input and button
             ),
