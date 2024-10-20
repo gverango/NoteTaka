@@ -1,5 +1,19 @@
 import reflex as rx
-from rxconfig import config
+import os
+import httpx  # To make API calls
+import multipart
+import python_multipart
+import google.generativeai as genai
+from dotenv import load_dotenv  # To load environment variables
+
+# Load the environment variables from the backend.env file
+load_dotenv("TaskTaka/backend.env")
+
+# Load the API key from the environment variable
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not GEMINI_API_KEY:
+    raise ValueError("API Key not found. Make sure GEMINI_API_KEY is set in the backend.env file")
 
 
 class State(rx.State):
@@ -14,19 +28,62 @@ class State(rx.State):
     # AI output after processing user input
     ai_output: str = ""
 
-    def add_todo_to_box(self):
+    async def add_todo_to_box(self):
         if not self.user_input.strip():  # NO WHITESPACE ONLY
-            self.user_input = ""  # Set user_input to nothing if invald REAL
-            return  # GET OUT
-    
-        """Add user input to the first empty todo box."""
-        for i in range(4):
-            if len(self.todos[i]) == min(len(todo) for todo in self.todos):
-                # Append a new tuple: (is_checked, user_input, another_flag)
-                self.todos[i].append((False, self.user_input))  # Initialize is_checked as False
-                break
-        self.user_input = ""  # Clear the input field
+            self.user_input = ""  # Set user_input to nothing if invalid
+            return  # EXIT
+
+        # Call the Gemini AI API to categorize the task
+        category, explanation = await self.call_gemini_api(self.user_input)
         
+        # Map the category to one of the quadrants (0 = Low Effort, Low Impact, etc.)
+        quadrant_mapping = {
+            "low_effort_low_impact": 0,
+            "high_effort_low_impact": 1,
+            "low_effort_high_impact": 2,
+            "high_effort_high_impact": 3,
+        }
+        
+        # Get the corresponding quadrant for the task
+        quadrant = quadrant_mapping.get(category, 0)
+
+        # Append the task (is_checked, text) to the appropriate quadrant
+        self.todos[quadrant].append((False, self.user_input))  # Initialize is_checked as False
+        
+        # Clear the input field
+        self.user_input = ""
+        
+        # Store the AI explanation
+        self.ai_output = explanation
+    
+    async def call_gemini_api(self, task_description: str):
+        try:
+            # Example API endpoint and key (replace with actual endpoint)
+            url = "https://your-gemini-api-endpoint.com/categorize_task"  # Replace with the correct URL
+            headers = {
+                "Authorization": f"Bearer {GEMINI_API_KEY}",  # Use your secure API key
+                "Content-Type": "application/json"
+            }
+            data = {"task": task_description}  # Send the task description to the API
+        
+        # Make the API call from the server-side (backend)
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=data, headers=headers)
+            
+                if response.status_code == 200:
+                    result = response.json()
+                    print("API Response:", result)  # Debug: Check the API response
+                
+                    category = result.get("category", "low_effort_low_impact")  # Get category from API response
+                    print("Task Category:", category)  # Log the category
+                
+                    explanation = result.get("explanation", "No explanation provided.")
+                
+                    return category, explanation
+                else:
+                    return "low_effort_low_impact", "Error: Unable to categorize task"
+        except Exception as e:
+            return "low_effort_low_impact", f"Error calling AI API: {str(e)}"
     def toggle_todo_checked(self, box_index: int, todo_index: int):
         """Toggle the checked state of the specified todo item."""
         checked, text = self.todos[box_index][todo_index]
@@ -136,6 +193,9 @@ def matrixpage() -> rx.Component:
                 ),
                 justify_content="center",  # Center the input and button
             ),
+            
+            # Display the AI's explanation after categorizing
+            rx.text(f"AI says: {State.ai_output}", margin_top="20px", color="gray"),
             
             align_items="center",  # Center everything
             width="100%",  # Ensure the container stays centered
