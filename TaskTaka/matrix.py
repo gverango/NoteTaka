@@ -87,7 +87,7 @@ def matrixpage() -> rx.Component:
                                 size="3",
                                 _hover={"textDecoration": "underline"}  # Underline on hover
                             ),
-                            spacing="10px"
+                            spacing="20px"
                         )
                     )
                 ),
