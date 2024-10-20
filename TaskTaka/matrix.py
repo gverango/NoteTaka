@@ -19,7 +19,7 @@ if not GEMINI_API_KEY:
 class State(rx.State):
     """The app state."""
     
-    # Track todos: (checked, text, deleted)
+    # Track todos: (checked, text)
     todos: list[list[tuple[bool, str]]] = [[], [], [], []]
     
     # User input from the text box
@@ -28,6 +28,7 @@ class State(rx.State):
     # AI output after processing user input
     ai_output: str = ""
 
+<<<<<<< Updated upstream
     async def add_todo_to_box(self):
         if not self.user_input.strip():  # NO WHITESPACE ONLY
             self.user_input = ""  # Set user_input to nothing if invalid
@@ -35,6 +36,20 @@ class State(rx.State):
 
         # Call the Gemini AI API to categorize the task
         category, explanation = await self.call_gemini_api(self.user_input)
+=======
+    def add_todo_to_box(self):
+        if not self.user_input.strip():  # NO ONLY WHITESPACE
+            self.user_input = ""  # Set user_input to nothing if invald REAL
+            return  # GET OUT
+    
+        """Add user input to the first empty todo box."""
+        for i in range(4):
+            if len(self.todos[i]) == min(len(todo) for todo in self.todos):
+                # Append a new tuple: (is_checked, user_input, another_flag)
+                self.todos[i].append((False, self.user_input))  # Initialize is_checked as False
+                break
+        self.user_input = ""  # Clear the input field
+>>>>>>> Stashed changes
         
         # Map the category to one of the quadrants (0 = Low Effort, Low Impact, etc.)
         quadrant_mapping = {
@@ -105,7 +120,27 @@ def matrixpage() -> rx.Component:
         "overflow_y": "auto"
     }
     
-    # Card colors
+    grid_button_props = {
+        "max_width": "350px",
+        "overflow": "visible",
+        "white_space": "normal",
+        "word_wrap": "break-words",
+        "word_break": "break-all", # word wrap for long words
+        "color": "inherit",
+        "text_align": "left",
+        "variant": "ghost",  # button transparent
+        "size": "3",
+        "_hover": {"textDecoration": "underline"}  # Underline on hover
+    }
+    
+    card_subtitles = [
+        "Quick Wins",
+        "Major Projects",
+        "Fill-Ins",
+        "Time Wasters"
+    ]
+    
+    # CARD COLORS
     card_colors = [
         {"background_color": "#FFC90E", "color": "black"},
         {"background_color": "#E00A0D", "color": "white"},
@@ -115,7 +150,16 @@ def matrixpage() -> rx.Component:
     
     # Create the grid layout for the task matrix
     grid = rx.grid(
-        *[
+    *[
+        rx.vstack(
+            # Subtitle placed above the card to keep it separate
+            rx.text(
+                card_subtitles[i],  # Get the subtitle for the current card
+                font_size="24px",   # Set font size for the subtitle
+                font_weight="bold", # Make the subtitle bold
+                text_align="center", # Center-align the subtitle
+                margin_bottom="5px" # Add some spacing below the subtitle
+            ),
             rx.card(
                 rx.vstack(
                     rx.foreach(
@@ -137,14 +181,9 @@ def matrixpage() -> rx.Component:
                                     {"textDecoration": "line-through", "opacity": 0.5},  # Apply strikethrough and make text translucent if checked
                                     {"textDecoration": "none", "opacity": 1}  # No strikethrough and full opacity if not checked
                                 ),
-                                on_click=lambda box_index=i, todo_index=index: State.remove_todo_from_box(box_index, todo_index),  # Remove the todo on click
-                                variant="ghost",  # Make the button transparent
-                                color="inherit",  # Inherit color from parent
-                                text_align="left",  # Align text to the left
-                                size="3",
-                                _hover={"textDecoration": "underline"}  # Underline on hover
+                                **grid_button_props
                             ),
-                            spacing="20px"
+                            spacing="15px"
                         )
                     )
                 ),
@@ -152,23 +191,17 @@ def matrixpage() -> rx.Component:
                 color=card_colors[i]["color"],
                 **grid_card_props  # Apply common card properties
             )
-            for i in range(4)
-        ],
-        columns="2",   # Keep 2 columns for the grid layout
-        gap="20px",    # Add gap between the cards for breathing room
-        width="800px", # Fixed width for the grid to avoid zoom issues
-        margin="auto", # Center the grid
+        )
+        for i in range(4)
+    ],
+    columns="2",   # Keep 2 columns for the grid layout
+    gap="20px",    # Add gap between the cards for breathing room
+    width="800px", # Fixed width for the grid to avoid zoom issues
+    margin="auto", # Center the grid
     )
     
     return rx.container(
         rx.vstack(  # Stack heading, grid, and input vertically
-            # Heading
-            rx.heading(
-                "Effort-Impact Task Matrix", 
-                font_size="40px", 
-                text_align="center", 
-                margin_bottom="30px"
-            ),
             
             # Grid displaying the four boxes
             grid,
