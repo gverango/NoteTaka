@@ -16,23 +16,26 @@ def index() -> rx.Component:
     return rx.container(
         rx.color_mode.button(position="top-right"),
         rx.vstack(
-            rx.heading("Welcome to TaskTaka!", size="9"),
+            rx.heading("Welcome to TaskTaka!", size="9", text_align="center"),
             rx.text(
-                "Get started by editing ",
-                rx.code(f"{config.app_name}/{config.app_name}.py"),
-                size="5",
+                "One Stop Task Management at Your Fingertips",
+                #rx.code(f"{config.app_name}/{config.app_name}.py"),
+                size="7",
+                text_align="center",
             ),
             rx.link(
-                rx.button("Try it out!"),
-                #href="Matrix.py",
+                rx.button("Try it out!", _hover={"cursor": "pointer"}),
+                #href="matrix.py",
                 is_external=False,
-                on_click=rx.redirect("/other")
+                on_click=rx.redirect("/other"),
+                text_align="center",
             ),
             spacing="5",
             justify="center",
+            align_items="center",
             min_height="85vh",
-        ),
-        rx.logo(),
+        )
+        #rx.logo()
     )
 
 

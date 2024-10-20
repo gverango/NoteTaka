@@ -8,8 +8,8 @@ class State(rx.State):
 
     ...
     
-def otherpage()->rx.Component:
-    return rx.box("new page")
+def matrixpage() -> rx.Component:
+    return rx.container()
 
 app = rx.App()
-app.add_page(otherpage, route="/other")
+app.add_page(matrixpage, route="/other")
