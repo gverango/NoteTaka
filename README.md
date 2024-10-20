@@ -29,7 +29,7 @@ Once Reflex.dev is installed, you can run the project locally:
   ```
 4. Access the application:
   After running the application, open your browser and navigate to:
-  ```http://localhost:8000```
+  ```http://localhost:3000```
 
 ## Use-Case Example
 Imagine you are juggling several tasks with varying degrees of importance and complexity. For example:
