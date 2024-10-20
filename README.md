@@ -17,7 +17,6 @@ To run **TaskTaka** locally, follow these steps:
    git clone https://github.com/your-repo/tasktaka.git
    cd tasktaka
    ```
-```
 2. Install Reflex.dev:
 If you don't already have Reflex.dev installed, you can install it using pip:
   ```bash
