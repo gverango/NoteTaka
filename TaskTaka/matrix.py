@@ -28,7 +28,6 @@ class State(rx.State):
     # AI output after processing user input
     ai_output: str = ""
 
-<<<<<<< Updated upstream
     async def add_todo_to_box(self):
         if not self.user_input.strip():  # NO WHITESPACE ONLY
             self.user_input = ""  # Set user_input to nothing if invalid
@@ -36,20 +35,6 @@ class State(rx.State):
 
         # Call the Gemini AI API to categorize the task
         category, explanation = await self.call_gemini_api(self.user_input)
-=======
-    def add_todo_to_box(self):
-        if not self.user_input.strip():  # NO ONLY WHITESPACE
-            self.user_input = ""  # Set user_input to nothing if invald REAL
-            return  # GET OUT
-    
-        """Add user input to the first empty todo box."""
-        for i in range(4):
-            if len(self.todos[i]) == min(len(todo) for todo in self.todos):
-                # Append a new tuple: (is_checked, user_input, another_flag)
-                self.todos[i].append((False, self.user_input))  # Initialize is_checked as False
-                break
-        self.user_input = ""  # Clear the input field
->>>>>>> Stashed changes
         
         # Map the category to one of the quadrants (0 = Low Effort, Low Impact, etc.)
         quadrant_mapping = {
