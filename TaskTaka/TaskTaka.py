@@ -3,6 +3,7 @@
 import reflex as rx
 
 from rxconfig import config
+from .matrix import matrixpage
 
 
 class State(rx.State):
