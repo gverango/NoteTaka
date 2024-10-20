@@ -25,10 +25,10 @@ def index() -> rx.Component:
                 text_align="center",
             ),
             rx.link(
-                rx.button("Try it out!", _hover={"cursor": "pointer"}),
+                rx.button("Try it out!", size="4", _hover={"cursor": "pointer"}),
                 #href="matrix.py",
                 is_external=False,
-                on_click=rx.redirect("/other"),
+                on_click=rx.redirect("/matrix"),
                 text_align="center",
             ),
             spacing="5",

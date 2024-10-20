@@ -1,32 +1,45 @@
 import reflex as rx
-
 from rxconfig import config
 
 
 class State(rx.State):
     """The app state."""
     
-    # seeing if input in each grid is possible
-    todos: list[list[str]] = [[], [], [], []]
+    # Track todos: (checked, text, deleted)
+    todos: list[list[tuple[bool, str]]] = [[], [], [], []]
     
-    # Store the user input from the text box
+    # User input from the text box
     user_input: str = ""
     
-    # Store what the AI outputs after processing the user input
+    # AI output after processing user input
     ai_output: str = ""
-    
-    # Function to handle adding the user input to the first empty box
+
     def add_todo_to_box(self):
+        if not self.user_input.strip():  # NO WHITESPACE ONLY
+            self.user_input = ""  # Set user_input to nothing if invald REAL
+            return  # GET OUT
+    
+        """Add user input to the first empty todo box."""
         for i in range(4):
             if len(self.todos[i]) == min(len(todo) for todo in self.todos):
-                self.todos[i].append(self.user_input)
+                # Append a new tuple: (is_checked, user_input, another_flag)
+                self.todos[i].append((False, self.user_input))  # Initialize is_checked as False
                 break
-        self.user_input = ""  #clears the input field
+        self.user_input = ""  # Clear the input field
+        
+    def toggle_todo_checked(self, box_index: int, todo_index: int):
+        """Toggle the checked state of the specified todo item."""
+        checked, text = self.todos[box_index][todo_index]
+        self.todos[box_index][todo_index] = (not checked, text)  # Toggle checked state
+        
+    def remove_todo_from_box(self, box_index: int, todo_index: int):
+        """Remove the specified todo item."""
+        self.todos[box_index].pop(todo_index)
 
 
-@rx.page(route="/other")
+@rx.page(route="/matrix")
 def matrixpage() -> rx.Component:
-    # properties of grid cards
+    # Properties of grid cards
     grid_card_props = {
         "height": "40vh",
         "width": "100%",
@@ -35,6 +48,7 @@ def matrixpage() -> rx.Component:
         "overflow_y": "auto"
     }
     
+    # Card colors
     card_colors = [
         {"background_color": "#FFC90E", "color": "black"},
         {"background_color": "#E00A0D", "color": "white"},
@@ -46,7 +60,37 @@ def matrixpage() -> rx.Component:
     grid = rx.grid(
         *[
             rx.card(
-                rx.vstack(rx.foreach(State.todos[i], lambda item: rx.text(item))),
+                rx.vstack(
+                    rx.foreach(
+                        State.todos[i],
+                        lambda todo, index=i: rx.hstack(
+                            rx.checkbox(
+                                checked=todo[0],  # Get the checked status from the tuple
+                                on_change=lambda checked, box_index=i, todo_index=index: (
+                                    State.toggle_todo_checked(box_index, todo_index)  # Call the toggle method
+                                ),
+                                variant="surface",
+                                color_scheme="gray",
+                                size="3"
+                            ),
+                            rx.button(
+                                todo[1],  # Get the task description from the todo tuple
+                                style=rx.cond(
+                                    todo[0],  # Check if the todo is checked
+                                    {"textDecoration": "line-through", "opacity": 0.5},  # Apply strikethrough and make text translucent if checked
+                                    {"textDecoration": "none", "opacity": 1}  # No strikethrough and full opacity if not checked
+                                ),
+                                on_click=lambda box_index=i, todo_index=index: State.remove_todo_from_box(box_index, todo_index),  # Remove the todo on click
+                                variant="ghost",  # Make the button transparent
+                                color="inherit",  # Inherit color from parent
+                                text_align="left",  # Align text to the left
+                                size="3",
+                                _hover={"textDecoration": "underline"}  # Underline on hover
+                            ),
+                            spacing="10px"
+                        )
+                    )
+                ),
                 background_color=card_colors[i]["background_color"],
                 color=card_colors[i]["color"],
                 **grid_card_props  # Apply common card properties
@@ -103,5 +147,5 @@ def matrixpage() -> rx.Component:
 
 
 # Initialize the app and add the page
-#app = rx.App()
-#app.add_page(matrixpage, route="/other")
+# app = rx.App()
+# app.add_page(matrixpage, route="/other")
