@@ -1,33 +1,36 @@
 import reflex as rx
 import os
-import httpx  # To make API calls
+import httpx  # making API calls
 import multipart
 import google.generativeai as genai
 from dotenv import load_dotenv  # To load environment variables
 
 
 
-# Loads environment variables from the backend.env file
+# Loads environment variables from the backend.env file, initializes GEMINI_API_KEY with secret one
 load_dotenv("TaskTaka/backend.env")
-# Load the API key from the environment variable
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
+if not GEMINI_API_KEY: #error if backend retrieval unsuccessful
     raise ValueError("API Key not found. Make sure GEMINI_API_KEY is set in the backend.env file")
-# Set the API key for the Gemini client
+
+# Set the API key for the Gemini client, from Google Gemini API Quickstart guide
 genai.configure(api_key=GEMINI_API_KEY)
 
 
 
 class State(rx.State):
     """The app state."""
-    
+
+# Pink going hard on the tuple based todo tracker
+
+
     # Track todos: (checked, text)
     todos: list[list[tuple[bool, str]]] = [[], [], [], []]
     
     # User input from the text box
     user_input: str = ""
     
-    # AI output after processing user input
+    # AI output after processing user input, to be used in API call
     ai_output: str = ""
 
     async def add_todo_to_box(self):
@@ -38,12 +41,12 @@ class State(rx.State):
         # Call the Gemini AI API to categorize the task
         category, explanation = await self.call_gemini_api(self.user_input)
 
-        # Map the category to one of the quadrants (0 = Low Effort, Low Impact, etc.)
+        # map category to one of the quadrants using a dictionary(0 = Low Effort, Low Impact)
         quadrant_mapping = {
-            "low_effort_high_impact": 0,
-            "high_effort_high_impact": 1,
-            "low_effort_low_impact": 2,
-            "high_effort_low_impact": 3,
+            "low_effort_high_impact": 0, # quick wins, yellow
+            "high_effort_high_impact": 1, # major projects, red
+            "low_effort_low_impact": 2, # fill ins, blue
+            "high_effort_low_impact": 3, #time wasters, green
         }
 
         # Get the corresponding quadrant for the task
@@ -56,22 +59,27 @@ class State(rx.State):
         self.user_input = ""
         self.ai_output = explanation
 
+
+
+
+# Freddie's collab on the eisen-hower matrix
     async def call_gemini_api(self, task_description: str):
         try:
             # Create an instance of the GenerativeModel
             model = genai.GenerativeModel("gemini-1.5-flash")
 
-            # Ask Gemini AI for specific categorization guidance
+            # Gemini AI prompt that appears at the bottom of the screen
             response = model.generate_content(
                 f"Please categorize the following task into one of the categories: "
                 f"low effort high impact, high effort high impact, low effort low impact, "
                 f"or high effort low impact. Task description: '{task_description}'"
         )
 
+# Gev's solution for AI task sorting
             # Extract the AI response text
             result_text = response.text.lower()
 
-            # Enhanced keyword mapping
+            # Searches dictionary and sets todo category
             if "low effort" in result_text and "high impact" in result_text:
                 category = "low_effort_high_impact"
             elif "high effort" in result_text and "high impact" in result_text:
@@ -82,11 +90,11 @@ class State(rx.State):
                 category = "high_effort_low_impact"
             else:
             # Default category if interpretation fails
-                category = "low_effort_low_impact"
+                category = "low_effort_low_impact" #fill ins
 
-            return category, result_text  # Use AI's explanation as result text
+            return category, result_text  # uses AI's explanation as result text
 
-        except Exception as e:
+        except Exception as e: #appears when the generate content prompt is faulty
             return "low_effort_low_impact", f"Error calling Gemini AI: {str(e)}"
 
 
@@ -102,17 +110,17 @@ class State(rx.State):
 
 @rx.page(route="/matrix")
 def matrixpage() -> rx.Component:
-    # Use color_mode_cond to dynamically switch axis color based on the theme
+    #reflex uses color_mode_cond to switch item color based on the theme
     axis_color = rx.color_mode_cond(
-        light="black",  # Axis color in light mode
-        dark="white"    # Axis color in dark mode
+        light="black",  # axis color in light
+        dark="white"    # axis color in dark
     )
 
     # Properties of the cards (as before)
     grid_card_props = {
         "flex": "1",  # Make each card flexible to fill available space
-        "height": "100%",  # Ensure cards fill their parent container
-        "width": "100%",   # Ensure equal width across quadrants
+        "height": "100%",  # card and header should fill respect quadrant
+        "width": "100%",   # Equal widths across quadrants
         "text_align": "center",
         "padding": "20px",
         "overflow_y": "auto"
@@ -260,7 +268,7 @@ def matrixpage() -> rx.Component:
                 padding="10px",
                 margin_top="20px"
             ),
-            # Display AI's explanation
+            # Displays AI explanation at the bottom of the page
             rx.text(f"AI says: {State.ai_output}", margin_top="20px", color="gray"),
             align_items="center",
             width="100%",
