@@ -5,14 +5,17 @@ import multipart
 import google.generativeai as genai
 from dotenv import load_dotenv  # To load environment variables
 
+
+
 # Loads environment variables from the backend.env file
 load_dotenv("TaskTaka/backend.env")
-
 # Load the API key from the environment variable
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 if not GEMINI_API_KEY:
     raise ValueError("API Key not found. Make sure GEMINI_API_KEY is set in the backend.env file")
+# Set the API key for the Gemini client
+genai.configure(api_key=GEMINI_API_KEY)
+
 
 
 class State(rx.State):
@@ -28,62 +31,65 @@ class State(rx.State):
     ai_output: str = ""
 
     async def add_todo_to_box(self):
-        if not self.user_input.strip():  # NO WHITESPACE ONLY
-            self.user_input = ""  # Set user_input to nothing if invalid
-            return  # EXIT
+        if not self.user_input.strip():
+            self.user_input = ""  # Clear the input if empty
+            return
 
         # Call the Gemini AI API to categorize the task
         category, explanation = await self.call_gemini_api(self.user_input)
-        
+
         # Map the category to one of the quadrants (0 = Low Effort, Low Impact, etc.)
         quadrant_mapping = {
-            "low_effort_high_impact": 0,  # yellow
-            "high_effort_high_impact": 1,  # red
-            "low_effort_low_impact": 2,  # blue
-            "high_effort_low_impact": 3,  # green
+            "low_effort_high_impact": 0,
+            "high_effort_high_impact": 1,
+            "low_effort_low_impact": 2,
+            "high_effort_low_impact": 3,
         }
-        
+
         # Get the corresponding quadrant for the task
-        quadrant = quadrant_mapping.get(category, 0)
+        quadrant = quadrant_mapping.get(category, 2)  # Default to "Fill-Ins" if no match
 
         # Append the task (is_checked, text) to the appropriate quadrant
-        self.todos[quadrant].append((False, self.user_input))  # Initialize is_checked as False
-        
-        # Clear the input field
+        self.todos[quadrant].append((False, self.user_input))  # Initialize as unchecked
+
+        # Clear the input field and store the AI explanation
         self.user_input = ""
-        
-        # Store the AI explanation
         self.ai_output = explanation
-    
+
     async def call_gemini_api(self, task_description: str):
         try:
-            # Example API endpoint and key (replace with actual endpoint)
-            url = "https://your-gemini-api-endpoint.com/categorize_task"  # Replace with the correct URL
-            headers = {
-                "Authorization": f"Bearer {GEMINI_API_KEY}",  # Use your secure API key
-                "Content-Type": "application/json"
-            }
-            data = {"task": task_description}  # Send the task description to the API
-        
-            # Make the API call from the server-side (backend)
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=data, headers=headers)
-            
-                if response.status_code == 200:
-                    result = response.json()
-                    print("API Response:", result)  # Debug: Check the API response
-                
-                    category = result.get("category", "low_effort_low_impact")  # Get category from API response
-                    print("Task Category:", category)  # Log the category
-                
-                    explanation = result.get("explanation", "No explanation provided.")
-                
-                    return category, explanation
-                else:
-                    return "low_effort_low_impact", "Error: Unable to categorize task"
+            # Create an instance of the GenerativeModel
+            model = genai.GenerativeModel("gemini-1.5-flash")
+
+            # Ask Gemini AI for specific categorization guidance
+            response = model.generate_content(
+                f"Please categorize the following task into one of the categories: "
+                f"low effort high impact, high effort high impact, low effort low impact, "
+                f"or high effort low impact. Task description: '{task_description}'"
+        )
+
+            # Extract the AI response text
+            result_text = response.text.lower()
+
+            # Enhanced keyword mapping
+            if "low effort" in result_text and "high impact" in result_text:
+                category = "low_effort_high_impact"
+            elif "high effort" in result_text and "high impact" in result_text:
+                category = "high_effort_high_impact"
+            elif "low effort" in result_text and "low impact" in result_text:
+                category = "low_effort_low_impact"
+            elif "high effort" in result_text and "low impact" in result_text:
+                category = "high_effort_low_impact"
+            else:
+            # Default category if interpretation fails
+                category = "low_effort_low_impact"
+
+            return category, result_text  # Use AI's explanation as result text
+
         except Exception as e:
-            return "low_effort_low_impact", f"Error calling AI API: {str(e)}"
-    
+            return "low_effort_low_impact", f"Error calling Gemini AI: {str(e)}"
+
+
     def toggle_todo_checked(self, box_index: int, todo_index: int):
         """Toggle the checked state of the specified todo item."""
         checked, text = self.todos[box_index][todo_index]
@@ -140,7 +146,7 @@ def matrixpage() -> rx.Component:
         {"background_color": "#B5E61D", "color": "black"},  # green, high effort, low impact
     ]
 
-    # Create the layout for each quadrant
+    # Modify the quadrant_layout lambda to include on_click event for task removal
     quadrant_layout = lambda subtitle, todos, box_index, color: rx.vstack(
         rx.text(subtitle, font_size="24px", font_weight="bold", text_align="center", margin_bottom="5px"),
         rx.card(
@@ -164,6 +170,7 @@ def matrixpage() -> rx.Component:
                                 {"textDecoration": "line-through", "opacity": 0.5},
                                 {"textDecoration": "none", "opacity": 1}
                             ),
+                            on_click=lambda box=box_index, todo_idx=todo_index: State.remove_todo_from_box(box, todo_idx),
                             **grid_button_props
                         ),
                         spacing="15px"
@@ -178,7 +185,6 @@ def matrixpage() -> rx.Component:
         height="100%", # Ensuring the quadrant fills available height
         padding="10px"
     )
-
     # Define the grid layout for the four quadrants
     grid_layout = rx.grid(
         # Top-left quadrant (Quick Wins)
