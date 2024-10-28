@@ -17,7 +17,13 @@ To run **TaskTaka** locally, follow these steps:
    git clone https://github.com/your-repo/tasktaka.git
    cd tasktaka
    ```
-2. Install Dependencies:
+2. Set up a Virtual Environment (Optional but Recommended)
+To keep the project environment isolated and dependencies portable, you can create a virtual environment:
+```
+python3 -m venv .venv
+source .venv/bin/activate  # Activate the virtual environment
+```
+3. Install Dependencies:
 If you don't already have Reflex.dev installed, you can install it using pip:
   ```bash
   pip install reflex.dev
@@ -30,12 +36,12 @@ Then, install API library:
 ```bash
 pip install -U google-generativeai
 ```
-3. Run the application:
+4. Run the application:
 Once Reflex.dev is installed, you can run the project locally: 
   ```bash
   reflex run
   ```
-4. Access the application:
+5. Access the application:
   After running the application, open your browser and navigate to:
   ```http://localhost:3000```
 
