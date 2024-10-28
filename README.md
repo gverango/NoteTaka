@@ -17,11 +17,19 @@ To run **TaskTaka** locally, follow these steps:
    git clone https://github.com/your-repo/tasktaka.git
    cd tasktaka
    ```
-2. Install Reflex.dev:
+2. Install Dependencies:
 If you don't already have Reflex.dev installed, you can install it using pip:
   ```bash
   pip install reflex.dev
   ```
+Initialize project with
+  ```bash
+  reflex init
+  ```
+Then, install API library:
+```bash
+pip install -U google-generativeai
+```
 3. Run the application:
 Once Reflex.dev is installed, you can run the project locally: 
   ```bash
@@ -48,8 +56,28 @@ Dependencies: Ensure that you have Python and Reflex.dev installed. Additional p
 Scaling: TaskTaka is designed to handle small to medium-sized task lists. Performance may degrade if handling a large number of tasks simultaneously.
 
 ## Project Directory
+```
+.
+├── README.md
+├── TaskTaka
+│   ├── TaskTaka.py
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── TaskTaka.cpython-312.pyc
+│   │   ├── __init__.cpython-312.pyc
+│   │   └── matrix.cpython-312.pyc
+│   └── matrix.py
+├── __pycache__
+│   └── rxconfig.cpython-312.pyc
+├── assets
+│   └── favicon.ico
+├── requirements.txt
+└── rxconfig.py
+```
 
 # Contributors
 Freddie Gutierrez, Leo Zhang, Gevilee Mariane Verango, Wallace Tang
+
+(CAL HACKS 11.0 CCSF CS Club)
 
 License
