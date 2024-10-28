@@ -3,6 +3,7 @@ import os
 import httpx  # making API calls
 # import multipart # this does nothing
 import google.generativeai as genai
+from google.generativeai import configure
 from dotenv import load_dotenv  # To load environment variables
 
 
@@ -14,7 +15,8 @@ if not GEMINI_API_KEY: #error if backend retrieval unsuccessful
     raise ValueError("API Key not found. Make sure GEMINI_API_KEY is set in the backend.env file")
 
 # Set the API key for the Gemini client, from Google Gemini API Quickstart guide
-genai.configure(api_key=GEMINI_API_KEY)
+genai.configure(api_key="AIzaSyA7UfdQVUNVJJ0FpCzbXFC7V3OVoQDRo9w")
+
 
 
 
